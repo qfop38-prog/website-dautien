@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xưởng Vibe</title>
+<meta name="description" content="Portfolio dark neon trưng bày các dự án vibecoding — mỗi dự án công khai prompt gốc, nhật ký vòng lặp và số liệu prompt / ngày / % code do AI viết.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0A0713">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%A1</text></svg>">
+
+<!-- Link preview khi share (Facebook / Zalo / Slack / Discord).
+     Đổi og:url + og:image sang domain thật của bạn sau khi deploy. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Xưởng Vibe">
+<meta property="og:description" content="Portfolio dark neon trưng bày các dự án vibecoding — mỗi dự án công khai prompt gốc, nhật ký vòng lặp và số liệu prompt / ngày / % code do AI viết.">
+<meta property="og:locale" content="vi_VN">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+</head>
+<body>
+<style>
+/* ============================================================
+   XƯỞNG VIBE — single-world dark neon design.
+   Deliberately single-theme: neon glow has no light-mode
+   equivalent. Every colour is painted explicitly from tokens.
+   ============================================================ */
+
+:root{
+  color-scheme: dark;
+
+  /* ground + surfaces (violet-biased neutrals, never pure grey) */
+  --void:      #07050D;
+  --ground:    #0A0713;
+  --panel:     #110B1E;
+  --panel-2:   #16102A;
+  --panel-3:   #1D1536;
+  --line:      #2B2145;
+  --line-soft: #1B1430;
+
+  /* text */
+  --text:   #EFEBF9;
+  --text-2: #B6ADD4;
+  --muted:  #7E759C;
+
+  /* accents — magenta is the one bold voice, cyan is secondary */
+  --magenta: #FF2D8F;
+  --cyan:    #3DF0DC;
+  --violet:  #8B5CFF;
+  --amber:   #FFB443;
+
+  --magenta-dim: rgba(255,45,143,.14);
+  --cyan-dim:    rgba(61,240,220,.12);
+  --violet-dim:  rgba(139,92,255,.16);
+
+  /* type */
+  --f-display: "Chakra Petch", "Be Vietnam Pro", system-ui, sans-serif;
+  --f-body:    "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:    "JetBrains Mono", "Be Vietnam Pro", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --step--1: .8125rem;
+  --step-0:  1rem;
+  --step-1:  1.1875rem;
+  --step-2:  1.5rem;
+  --step-3:  clamp(1.75rem, 1.2rem + 2.2vw, 2.5rem);
+  --step-4:  clamp(2.4rem, 1.2rem + 5vw, 4.25rem);
+
+  --shell: 1180px;
+  --pad: clamp(1.15rem, 4vw, 2.5rem);
+  --radius: 14px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+[hidden]{ display:none !important; }   /* .card sets display:flex and would beat the UA rule */
+img{ max-width:100%; height:auto; }
+html{ scroll-behavior: smooth; }
+section[id], main[id]{ scroll-margin-top: 84px; }
+
+body{
+  margin:0;
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------- ambient field ---------- */
+.field{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 620px at 8% -8%,  rgba(139,92,255,.30), transparent 62%),
+    radial-gradient(780px 560px at 96% 4%,  rgba(255,45,143,.20), transparent 60%),
+    radial-gradient(700px 700px at 60% 108%, rgba(61,240,220,.10), transparent 62%),
+    var(--void);
+}
+.field::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(to right, rgba(139,92,255,.13) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(139,92,255,.13) 1px, transparent 1px);
+  background-size: 58px 58px;
+  -webkit-mask-image: radial-gradient(1100px 780px at 50% 0%, #000 0%, transparent 78%);
+          mask-image: radial-gradient(1100px 780px at 50% 0%, #000 0%, transparent 78%);
+}
+.field::after{
+  content:"";
+  position:absolute; inset:0;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,.022) 0 1px, transparent 1px 3px);
+  opacity:.7;
+}
+
+.shell{ width:min(100% - calc(var(--pad) * 2), var(--shell)); margin-inline:auto; }
+main, header, footer{ position:relative; z-index:1; }
+
+/* ---------- shared type roles ---------- */
+.eyebrow{
+  font-family: var(--f-display);
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  display:flex; align-items:center; gap:.6rem;
+  margin:0;
+}
+.eyebrow::before{
+  content:"";
+  width:26px; height:1px;
+  background: linear-gradient(to right, var(--cyan), transparent);
+}
+h1,h2,h3{ font-family: var(--f-body); font-weight:800; text-wrap:balance; margin:0; line-height:1.12; letter-spacing:-.02em; }
+h2{ font-size: var(--step-3); }
+h3{ font-size: var(--step-1); font-weight:700; letter-spacing:-.01em; }
+p{ margin:0; }
+.lede{ color: var(--text-2); font-size: var(--step-1); line-height:1.6; max-width: 60ch; }
+.mono{ font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+a{ color: var(--cyan); }
+:focus-visible{ outline:2px solid var(--cyan); outline-offset:3px; border-radius:6px; }
+
+/* ---------- nav ---------- */
+.nav{
+  position: sticky; top:0; z-index:60;
+  backdrop-filter: blur(14px);
+  background: linear-gradient(to bottom, rgba(10,7,19,.94), rgba(10,7,19,.72));
+  border-bottom:1px solid var(--line-soft);
+}
+.nav-in{ display:flex; align-items:center; gap:1.5rem; height:62px; }
+.brand{
+  font-family: var(--f-display); font-weight:700; font-size:1.0625rem;
+  letter-spacing:.06em; color:var(--text); text-decoration:none; white-space:nowrap;
+}
+.brand span{ color: var(--magenta); }
+.nav-links{ display:flex; gap:1.4rem; margin-left:auto; }
+.nav-links a{
+  font-family: var(--f-display); font-size:.78rem; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; color: var(--text-2); text-decoration:none;
+  transition: color .18s ease;
+}
+.nav-links a:hover{ color: var(--text); }
+.status{
+  display:inline-flex; align-items:center; gap:.5rem;
+  font-family: var(--f-display); font-size:.68rem; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase; color: var(--cyan);
+  border:1px solid rgba(61,240,220,.35); border-radius:999px;
+  padding:.3rem .7rem; background: var(--cyan-dim); white-space:nowrap;
+}
+.dot{ width:6px; height:6px; border-radius:50%; background: var(--cyan); box-shadow:0 0 9px var(--cyan); animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.32} }
+
+/* ---------- hero ---------- */
+.hero{ padding: clamp(3rem, 7vw, 5.5rem) 0 clamp(2rem,4vw,3rem); }
+.hero-grid{ display:grid; grid-template-columns: 1.02fr .98fr; gap: clamp(2rem, 4vw, 3.5rem); align-items:center; }
+.hero-copy{ display:flex; flex-direction:column; gap:1.4rem; }
+.hero h1{ font-size: var(--step-4); }
+.hero h1 em{
+  font-style:normal;
+  font-family: var(--f-mono); font-weight:700;
+  font-size:.82em; letter-spacing:-.03em;
+  color: var(--magenta);
+  text-shadow: 0 0 26px rgba(255,45,143,.55);
+}
+.cta-row{ display:flex; flex-wrap:wrap; gap:.75rem; }
+.btn{
+  font-family: var(--f-display); font-size:.8rem; font-weight:600;
+  letter-spacing:.13em; text-transform:uppercase;
+  padding:.78rem 1.35rem; border-radius:999px; border:1px solid transparent;
+  cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:.5rem;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
+}
+.btn-primary{ background: var(--magenta); color:#12030B; box-shadow: 0 0 0 0 rgba(255,45,143,.5); }
+.btn-primary:hover{ transform: translateY(-2px); box-shadow: 0 10px 34px -8px rgba(255,45,143,.75); }
+.btn-ghost{ background: transparent; color: var(--text); border-color: var(--line); }
+.btn-ghost:hover{ border-color: var(--cyan); color: var(--cyan); transform: translateY(-2px); }
+
+/* terminal */
+.term{
+  background: linear-gradient(160deg, var(--panel-2), var(--panel));
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 40px 90px -50px rgba(139,92,255,.8), inset 0 1px 0 rgba(255,255,255,.05);
+  overflow:hidden;
+}
+.term-bar{
+  display:flex; align-items:center; gap:.55rem;
+  padding:.6rem .9rem; border-bottom:1px solid var(--line-soft);
+  background: rgba(255,255,255,.02);
+}
+.term-bar b{
+  font-family: var(--f-display); font-size:.66rem; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase; color: var(--muted); margin-left:.35rem;
+}
+.led{ width:9px; height:9px; border-radius:50%; }
+.led.a{ background: var(--magenta); } .led.b{ background: var(--amber); } .led.c{ background: var(--cyan); }
+.term-body{ padding: 1.15rem 1.15rem 1.25rem; font-family: var(--f-mono); font-size: .8125rem; line-height:1.75; }
+.term-line{ display:flex; gap:.6rem; }
+.term-line .arrow{ color: var(--magenta); flex:none; }
+#promptText{ color: var(--text); }
+.caret{ display:inline-block; width:8px; height:1.05em; vertical-align:-2px; background: var(--cyan); margin-left:2px; animation: blink 1.05s steps(1) infinite; }
+@keyframes blink{ 0%,50%{opacity:1} 51%,100%{opacity:0} }
+.term-out{ margin-top:.95rem; padding-top:.85rem; border-top:1px dashed var(--line); color: var(--muted); font-size:.75rem; display:grid; gap:.3rem; }
+.term-out b{ color: var(--cyan); font-weight:500; }
+
+/* ---------- telemetry ---------- */
+.telemetry{
+  display:grid; grid-template-columns: repeat(4, 1fr);
+  border-block:1px solid var(--line-soft);
+  background: linear-gradient(to bottom, rgba(139,92,255,.05), transparent);
+}
+.tele{ padding: 1.15rem 1rem; display:grid; gap:.2rem; border-left:1px solid var(--line-soft); }
+.tele:first-child{ border-left:0; }
+.tele dt{ font-family: var(--f-display); font-size:.66rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color: var(--muted); }
+.tele dd{ margin:0; font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size:1.6rem; font-weight:700; color: var(--text); line-height:1.1; }
+.tele dd small{ font-size:.85rem; font-weight:400; color: var(--text-2); margin-left:.4rem; letter-spacing:.01em; }
+
+/* ---------- sections ---------- */
+.sec{ padding: clamp(3.5rem, 7vw, 6rem) 0; }
+.sec-head{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:1rem 2rem; margin-bottom: 2.25rem; }
+.sec-head .txt{ display:grid; gap:.7rem; }
+.note{
+  font-family: var(--f-mono); font-size:.7rem; color: var(--amber);
+  border:1px dashed rgba(255,180,67,.4); border-radius:8px;
+  padding:.45rem .7rem; background: rgba(255,180,67,.07); margin-left:auto;
+}
+
+/* filters */
+.filters{ display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.6rem; }
+.chip{
+  font-family: var(--f-display); font-size:.72rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+  padding:.45rem .85rem; border-radius:999px; cursor:pointer;
+  background: transparent; color: var(--text-2); border:1px solid var(--line);
+  transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+.chip:hover{ color: var(--text); border-color: var(--violet); }
+.chip[aria-pressed="true"]{ background: var(--magenta); border-color: var(--magenta); color:#12030B; }
+
+/* project grid */
+.grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap:1rem; }
+.card{
+  --mx:50%; --my:0%;
+  position:relative; isolation:isolate; cursor:pointer;
+  background: var(--panel); border:1px solid var(--line-soft); border-radius: var(--radius);
+  padding:1.35rem 1.35rem 1.15rem;
+  display:flex; flex-direction:column; gap:.85rem;
+  transition: transform .2s ease, border-color .2s ease;
+}
+.card::before{
+  content:""; position:absolute; inset:0; border-radius:inherit; z-index:-1;
+  background: radial-gradient(320px circle at var(--mx) var(--my), var(--magenta-dim), transparent 68%);
+  opacity:0; transition: opacity .25s ease;
+}
+.card:hover, .card:focus-visible{ transform: translateY(-3px); border-color: var(--violet); }
+.card:hover::before, .card:focus-visible::before{ opacity:1; }
+.card-top{ display:flex; align-items:center; gap:.6rem; }
+.pill{
+  font-family: var(--f-display); font-size:.62rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+  padding:.22rem .55rem; border-radius:999px; border:1px solid; white-space:nowrap;
+}
+.pill.live{ color: var(--cyan); border-color: rgba(61,240,220,.4); background: var(--cyan-dim); }
+.pill.beta{ color: var(--amber); border-color: rgba(255,180,67,.4); background: rgba(255,180,67,.09); }
+.pill.lab { color: var(--violet); border-color: rgba(139,92,255,.45); background: var(--violet-dim); }
+.card-kind{ margin-left:auto; font-family: var(--f-mono); font-size:.68rem; color: var(--muted); letter-spacing:.06em; }
+.card p.tag{ color: var(--text-2); font-size:.9rem; line-height:1.55; }
+.metrics{ display:flex; flex-wrap:wrap; gap:.35rem; margin-top:auto; }
+.metric{
+  font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size:.7rem;
+  color: var(--text-2); background: var(--panel-2); border:1px solid var(--line-soft);
+  border-radius:6px; padding:.28rem .5rem;
+}
+.metric b{ color: var(--text); font-weight:700; }
+.stack-row{ display:flex; flex-wrap:wrap; gap:.3rem; }
+.tech{ font-family: var(--f-mono); font-size:.68rem; color: var(--muted); }
+.tech::after{ content:"·"; margin-left:.3rem; color: var(--line); }
+.tech:last-child::after{ content:""; }
+.card-cta{
+  font-family: var(--f-display); font-size:.7rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  color: var(--magenta); display:flex; align-items:center; gap:.4rem; padding-top:.7rem; border-top:1px solid var(--line-soft);
+}
+.card:hover .card-cta span{ transform: translateX(4px); }
+.card-cta span{ transition: transform .18s ease; display:inline-block; }
+
+/* ---------- loop ---------- */
+.loop{ display:grid; grid-template-columns: repeat(4, 1fr); gap:.9rem; }
+.step{
+  position:relative; background: var(--panel); border:1px solid var(--line-soft);
+  border-radius: var(--radius); padding:1.2rem 1.15rem; display:grid; gap:.55rem; align-content:start;
+}
+.step .idx{
+  font-family: var(--f-mono); font-size:.72rem; font-weight:700; color: var(--magenta); letter-spacing:.1em;
+}
+.step p{ color: var(--text-2); font-size:.875rem; line-height:1.6; }
+.loop-back{
+  display:flex; align-items:center; gap:.7rem; margin-top:1rem;
+  font-family: var(--f-mono); font-size:.75rem; color: var(--cyan);
+  border:1px dashed rgba(61,240,220,.35); border-radius:999px; padding:.55rem 1rem; width:fit-content;
+}
+.ship{
+  margin-top:1rem; background: linear-gradient(120deg, rgba(255,45,143,.13), rgba(139,92,255,.10));
+  border:1px solid rgba(255,45,143,.32); border-radius: var(--radius); padding:1.2rem 1.35rem;
+  display:flex; flex-wrap:wrap; gap:.5rem 1.2rem; align-items:baseline;
+}
+.ship b{ font-family: var(--f-display); letter-spacing:.16em; text-transform:uppercase; font-size:.78rem; color: var(--magenta); }
+.ship p{ color: var(--text-2); font-size:.9rem; flex:1 1 380px; }
+
+/* ---------- toolkit ---------- */
+.rail{ overflow:hidden; border-block:1px solid var(--line-soft); padding:1.1rem 0; -webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent); mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent); }
+.rail-track{ display:flex; gap:2.2rem; width:max-content; animation: slide 34s linear infinite; }
+.rail:hover .rail-track{ animation-play-state: paused; }
+.rail-track span{ font-family: var(--f-mono); font-size:.85rem; color: var(--text-2); white-space:nowrap; }
+.rail-track span::before{ content:"◇"; color: var(--violet); margin-right:.7rem; }
+@keyframes slide{ from{ transform: translateX(0) } to{ transform: translateX(-50%) } }
+
+/* ---------- contact ---------- */
+.contact{
+  background: linear-gradient(150deg, var(--panel-2), var(--panel));
+  border:1px solid var(--line); border-radius: 20px;
+  padding: clamp(1.8rem, 4vw, 3rem);
+  display:grid; gap:1.4rem; justify-items:start;
+  box-shadow: 0 50px 110px -60px rgba(255,45,143,.7);
+}
+.mailchip{
+  font-family: var(--f-mono); font-size:1rem; color: var(--cyan);
+  border:1px solid rgba(61,240,220,.32); background: var(--cyan-dim);
+  border-radius:10px; padding:.7rem 1rem; word-break:break-all;
+}
+footer{ border-top:1px solid var(--line-soft); padding:1.8rem 0 2.6rem; }
+.foot{ display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; align-items:center; font-family: var(--f-mono); font-size:.72rem; color: var(--muted); }
+.foot .sep{ margin-left:auto; }
+
+/* ---------- dialog ---------- */
+dialog{
+  border:0; padding:0; background:transparent; color:var(--text);
+  max-width:min(720px, calc(100vw - 2rem)); width:100%;
+  max-height: calc(100dvh - 3rem);
+}
+dialog::backdrop{ background: rgba(4,2,10,.82); backdrop-filter: blur(6px); }
+.sheet{
+  background: linear-gradient(165deg, var(--panel-2), var(--panel));
+  border:1px solid var(--line); border-radius:18px;
+  max-height: calc(100dvh - 3rem); overflow:auto;
+  box-shadow: 0 60px 120px -50px rgba(0,0,0,.9);
+}
+.sheet-head{
+  position:sticky; top:0; z-index:2;
+  display:flex; align-items:flex-start; gap:1rem;
+  padding:1.35rem 1.5rem 1.1rem;
+  background: linear-gradient(to bottom, var(--panel-2) 72%, transparent);
+  border-bottom:1px solid var(--line-soft);
+}
+.sheet-head h3{ font-size: var(--step-2); }
+.sheet-head .sub{ color: var(--text-2); font-size:.875rem; margin-top:.3rem; }
+.x{
+  margin-left:auto; flex:none; width:34px; height:34px; border-radius:50%;
+  border:1px solid var(--line); background: var(--panel-3); color: var(--text-2);
+  font-size:1rem; cursor:pointer; line-height:1;
+}
+.x:hover{ color: var(--magenta); border-color: var(--magenta); }
+.sheet-body{ padding: 1.25rem 1.5rem 1.6rem; display:grid; gap:1.5rem; }
+.blk{ display:grid; gap:.6rem; }
+.blk-label{ font-family: var(--f-display); font-size:.68rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color: var(--muted); }
+.seed{
+  font-family: var(--f-mono); font-size:.82rem; line-height:1.7; color: var(--text);
+  background: var(--void); border:1px solid var(--line); border-left:3px solid var(--magenta);
+  border-radius:10px; padding:1rem 1.1rem; overflow-x:auto;
+}
+.log{ display:grid; gap:.15rem; }
+.log-item{ display:grid; gap:.3rem; padding:.85rem 0 .85rem 1.15rem; border-left:1px solid var(--line); position:relative; }
+.log-item::before{
+  content:""; position:absolute; left:-4px; top:1.15rem; width:7px; height:7px;
+  border-radius:50%; background: var(--cyan); box-shadow:0 0 10px var(--cyan);
+}
+.log-item:last-child{ border-left-color: transparent; }
+.log-item h4{ margin:0; font-family: var(--f-mono); font-size:.76rem; font-weight:700; color: var(--cyan); letter-spacing:.02em; }
+.log-item p{ color: var(--text-2); font-size:.875rem; line-height:1.6; }
+.lesson{
+  background: rgba(255,180,67,.07); border:1px solid rgba(255,180,67,.28);
+  border-radius:10px; padding:.95rem 1.1rem; color: var(--text); font-size:.9rem; line-height:1.6;
+}
+.lesson b{ color: var(--amber); font-family: var(--f-display); letter-spacing:.14em; text-transform:uppercase; font-size:.68rem; display:block; margin-bottom:.35rem; font-weight:600; }
+.kv{ display:grid; grid-template-columns: auto 1fr; gap:.45rem 1.1rem; font-family: var(--f-mono); font-size:.8rem; }
+.kv dt{ color: var(--muted); }
+.kv dd{ margin:0; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 940px){
+  .hero-grid{ grid-template-columns: 1fr; }
+  .loop{ grid-template-columns: repeat(2, 1fr); }
+  .telemetry{ grid-template-columns: repeat(2, 1fr); }
+  .tele:nth-child(3){ border-left:0; }
+  .tele:nth-child(n+3){ border-top:1px solid var(--line-soft); }
+}
+@media (max-width: 640px){
+  .nav-links{ display:none; }
+  .status{ margin-left:auto; }
+  .loop{ grid-template-columns: 1fr; }
+  .note{ margin-left:0; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+  .rail-track{ animation:none; flex-wrap:wrap; width:auto; }
+}
+</style>
+
+<div class="field" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="shell nav-in">
+    <a class="brand" href="#top">XƯỞNG<span>//</span>VIBE</a>
+    <nav class="nav-links">
+      <a href="#work">Dự án</a>
+      <a href="#loop">Vòng lặp</a>
+      <a href="#kit">Bộ đồ nghề</a>
+      <a href="#contact">Liên hệ</a>
+    </nav>
+    <span class="status"><i class="dot"></i>Available for work</span>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero shell">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Selected work · Vibecoded</p>
+        <h1>Prompt chính là <em>source code</em>.</h1>
+        <p class="lede">Sáu dự án đi từ một câu tiếng Việt đến bản deploy chạy thật. Mỗi dự án ở đây công khai prompt gốc, số vòng lặp đã tốn, và cả những chỗ AI làm hỏng — vì đó mới là phần đáng đọc.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#work">Xem dự án</a>
+          <a class="btn btn-ghost" href="#loop">Cách tôi làm</a>
+        </div>
+      </div>
+
+      <div class="term">
+        <div class="term-bar">
+          <i class="led a"></i><i class="led b"></i><i class="led c"></i>
+          <b>prompt gốc — <span id="termName">cho-dem</span></b>
+        </div>
+        <div class="term-body">
+          <div class="term-line">
+            <span class="arrow">›</span>
+            <span><span id="promptText"></span><i class="caret" aria-hidden="true"></i></span>
+          </div>
+          <div class="term-out">
+            <div><b id="termStat">62 prompts</b> · <span id="termDays">4 ngày</span> · <span id="termAi">88% code do AI viết</span></div>
+            <div>status: <b>shipped</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="shell">
+    <dl class="telemetry" id="telemetry"></dl>
+  </section>
+
+  <section class="sec shell" id="work">
+    <div class="sec-head">
+      <div class="txt">
+        <p class="eyebrow">Selected work</p>
+        <h2>Sáu thứ đã ship</h2>
+      </div>
+      <p class="note">Dữ liệu mẫu — thay bằng dự án thật của bạn</p>
+    </div>
+
+    <div class="filters" id="filters" role="group" aria-label="Lọc theo loại dự án"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="sec shell" id="loop">
+    <div class="sec-head">
+      <div class="txt">
+        <p class="eyebrow">How it's made</p>
+        <h2>Vòng lặp</h2>
+        <p class="lede">Bốn bước, lặp đến khi hết chuyện để sửa. Đánh số vì đây thật sự là một chuỗi có thứ tự — không phải để trang trí.</p>
+      </div>
+    </div>
+
+    <div class="loop">
+      <article class="step">
+        <span class="idx">01</span>
+        <h3>Mô tả</h3>
+        <p>Viết bằng tiếng Việt, như đang nói với đồng nghiệp. Tả người dùng và ràng buộc, đừng tả tính năng.</p>
+      </article>
+      <article class="step">
+        <span class="idx">02</span>
+        <h3>Sinh</h3>
+        <p>Để model dựng nguyên khối. Đừng ngắt giữa chừng để "sửa cho nhanh" — ngắt là mất mạch.</p>
+      </article>
+      <article class="step">
+        <span class="idx">03</span>
+        <h3>Chạy thử</h3>
+        <p>Mở lên, bấm như người dùng thật, trên đúng thiết bị thật. Chưa chạy thì chưa có ý kiến.</p>
+      </article>
+      <article class="step">
+        <span class="idx">04</span>
+        <h3>Chỉnh vibe</h3>
+        <p>Nói cái cảm giác đang sai, đừng chỉ dòng code nào sai. Nói xong thì quay lại bước 01.</p>
+      </article>
+    </div>
+
+    <p class="loop-back">↺ 04 → 01 · trung bình <b class="mono" id="loopAvg">53</b> vòng cho một dự án</p>
+
+    <div class="ship">
+      <b>Ra mắt</b>
+      <p>Dừng khi thêm một vòng nữa cũng không đổi được gì đáng kể. Đó là lúc ship — không phải lúc hoàn hảo.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="kit">
+    <div class="shell sec-head">
+      <div class="txt">
+        <p class="eyebrow">Toolkit</p>
+        <h2>Bộ đồ nghề</h2>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="rail-track" id="rail" aria-label="Danh sách công cụ"></div>
+    </div>
+  </section>
+
+  <section class="sec shell" id="contact">
+    <div class="contact">
+      <p class="eyebrow">Get in touch</p>
+      <h2>Có ý tưởng? Mô tả một câu là đủ bắt đầu.</h2>
+      <p class="lede">Nhận dự án nhỏ và vừa: web app, dashboard, công cụ nội bộ, prototype để đi gọi vốn. Thường trả bản chạy được trong 3–7 ngày.</p>
+      <p class="mailchip">xin-chao@xuongvibe.dev</p>
+      <p class="tech" style="color:var(--muted)">Địa chỉ trên là chỗ giữ chỗ — thay bằng email thật của bạn trước khi chia sẻ trang này.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <span>XƯỞNG//VIBE</span>
+    <span>Dựng bằng chính cách nó kể — mô tả, sinh, chạy thử, chỉnh.</span>
+    <span class="sep">MMXXVI</span>
+  </div>
+</footer>
+
+<dialog id="sheet" aria-labelledby="sheetTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h3 id="sheetTitle"></h3>
+        <p class="sub" id="sheetSub"></p>
+      </div>
+      <button class="x" id="closeBtn" aria-label="Đóng">✕</button>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+
+  var PROJECTS = [
+    {
+      id:"cho-dem", name:"Chợ Đêm", kind:"Web App", status:"live",
+      tag:"Bản đồ street food realtime — biết quán nào còn mở lúc 2 giờ sáng.",
+      stack:["React","Mapbox GL","Supabase Realtime","Tailwind"],
+      prompts:62, days:4, ai:88, model:"Opus", demo:"chodem.demo",
+      seed:"Làm web bản đồ đồ ăn đêm ở Sài Gòn. Người dùng thấy các quán quanh mình, lọc theo “đang mở”, và tự thêm quán mới. Mobile-first, dark mode, phải load dưới 2 giây trên 3G.",
+      log:[
+        {t:"Prompt 1–8 · Dựng khung", d:"Có ngay map + list + bottom sheet. Layout đúng khoảng 90%, chỉ sai chỗ z-index của sheet đè lên marker."},
+        {t:"Prompt 9–31 · Realtime", d:"Supabase channel chạy, nhưng mỗi lần có quán mới là re-render toàn bộ marker. Phải nói rõ “chỉ patch marker thay đổi” mới ra đúng."},
+        {t:"Prompt 32–50 · Giờ mở cửa", d:"Chỗ AI làm hỏng: quán mở 22:00 → 03:00 bị tính là đang đóng. Tốn 6 prompt, và lỗi là do mình mô tả thiếu, không phải do model."},
+        {t:"Prompt 51–62 · Ship", d:"Lighthouse 96. Deploy và trỏ domain xong trong 20 phút."}
+      ],
+      lesson:"Bug khó nhất không nằm trong code — nó nằm ở chỗ mình quên nói “qua nửa đêm”."
+    },
+    {
+      id:"so-bui", name:"Sổ Bụi", kind:"PWA", status:"live",
+      tag:"Ghi chú offline-first. Mất mạng vẫn viết, có mạng thì tự merge.",
+      stack:["Vanilla JS","IndexedDB","Service Worker","CRDT"],
+      prompts:38, days:2, ai:95, model:"Opus", demo:"sobui.demo",
+      seed:"Viết app ghi chú chạy hoàn toàn offline, không framework, không build step. Lưu vào IndexedDB, đồng bộ khi online bằng CRDT đơn giản. Một file HTML duy nhất, dưới 60KB.",
+      log:[
+        {t:"Prompt 1–6 · Một file", d:"Ràng buộc “một file, không build” làm output gọn hẳn. Không có node_modules thì cũng không có chỗ để sai."},
+        {t:"Prompt 7–22 · CRDT", d:"Yêu cầu last-writer-wins theo từng ký tự. Thuật toán đúng, nhưng quên clock skew giữa hai thiết bị nên gõ song song bị nuốt chữ."},
+        {t:"Prompt 23–38 · Service worker", d:"Cache versioning là chỗ duy nhất mình phải đọc kỹ từng dòng trước khi cho vào."}
+      ],
+      lesson:"Ràng buộc càng chặt, kết quả càng sạch. “Dưới 60KB” đáng giá hơn mười câu mô tả."
+    },
+    {
+      id:"den-keo-quan", name:"Đèn Kéo Quân", kind:"Creative", status:"beta",
+      tag:"Phòng trưng bày shader — 12 cảnh generative chạy 60fps trong trình duyệt.",
+      stack:["Three.js","GLSL","Vite"],
+      prompts:91, days:6, ai:74, model:"Opus", demo:"denkeoquan.demo",
+      seed:"Làm gallery WebGL gồm nhiều cảnh shader, chuyển cảnh mượt, có thanh chỉnh tham số realtime. Lấy cảm hứng từ đèn kéo quân: bóng xoay, giấy mỏng, ánh nến.",
+      log:[
+        {t:"Prompt 1–12 · Khung gallery", d:"Router, canvas và panel chỉnh tham số ra rất nhanh, gần như không phải sửa."},
+        {t:"Prompt 13–58 · GLSL", d:"Đây là phần AI đuối nhất. Shader compile được nhưng nhìn “sai vibe” — noise và falloff phải tự chỉnh tay từng chút."},
+        {t:"Prompt 59–91 · Hiệu năng", d:"Từ 22fps lên 60fps sau khi gộp draw call và hạ độ phân giải noise texture xuống một nửa."}
+      ],
+      lesson:"Vibecoding mạnh ở cấu trúc, yếu ở thẩm mỹ. Shader là chỗ phải tự cầm tay lái — và đó là lý do tỉ lệ AI ở đây thấp nhất."
+    },
+    {
+      id:"bang-bun", name:"Bảng Bún", kind:"Dashboard", status:"live",
+      tag:"Dashboard doanh thu cho chuỗi 9 quán bún — cập nhật theo từng hoá đơn.",
+      stack:["Next.js","Postgres","Drizzle","Recharts"],
+      prompts:55, days:3, ai:90, model:"Opus", demo:"bangbun.demo",
+      seed:"Dashboard cho chủ chuỗi quán ăn: doanh thu theo ngày và theo quán, món bán chạy, giờ cao điểm. Người dùng không rành máy tính — số phải to, ít chữ, mở trên iPad dựng ngang.",
+      log:[
+        {t:"Prompt 1–14 · Schema", d:"Mô tả bằng đúng từ nghiệp vụ tiếng Việt (hoá đơn, món, ca) và schema Postgres ra hợp lý ngay từ đầu."},
+        {t:"Prompt 15–40 · Biểu đồ", d:"Bản đầu dùng sáu màu loè loẹt, nhìn không ra gì. Ép về một màu nhấn cộng thang xám thì đọc được ngay."},
+        {t:"Prompt 41–55 · iPad", d:"Chỉ cần đúng một câu: “tối ưu cho iPad nằm ngang, ngón tay chứ không phải chuột”."}
+      ],
+      lesson:"Mô tả người dùng thật, đừng mô tả tính năng. Câu “chủ quán không rành máy tính” đổi cả thiết kế."
+    },
+    {
+      id:"vi-keo", name:"Ví Kẹo", kind:"Tool", status:"beta",
+      tag:"Chia tiền ăn nhậu bằng cách chụp hoá đơn — OCR xong tự chia.",
+      stack:["Svelte","Tesseract.js","Zod"],
+      prompts:44, days:2, ai:93, model:"Opus", demo:"vikeo.demo",
+      seed:"Web chụp ảnh hoá đơn, đọc số tiền từng món, cho phép gán món cho từng người rồi chia tiền. Chạy hết trong trình duyệt, tuyệt đối không upload ảnh lên server.",
+      log:[
+        {t:"Prompt 1–9 · OCR", d:"Tesseract đọc số tiền kiểu Việt Nam (1.250.000) sai dấu chấm. Phải viết riêng một bộ parse cho định dạng này."},
+        {t:"Prompt 10–30 · Gán món", d:"Kéo thả tên người vào từng món — ra đúng ngay ở prompt thứ hai, gần như không phải sửa."},
+        {t:"Prompt 31–44 · Làm tròn", d:"Chia ba người thì tổng lệch một đồng. Chốt quy tắc: người trả nhiều nhất chịu phần lẻ."}
+      ],
+      lesson:"Mọi bài toán dính tiền đều có sẵn một cái bug làm tròn đang ngồi đợi."
+    },
+    {
+      id:"ran-lua", name:"Rắn Lụa", kind:"Game", status:"lab",
+      tag:"Rắn săn mồi, nhưng thân là dải lụa có quán tính. Làm trong một buổi tối.",
+      stack:["Canvas 2D","TypeScript"],
+      prompts:29, days:1, ai:97, model:"Opus", demo:"ranlua.demo",
+      seed:"Game rắn săn mồi trên canvas, nhưng thân rắn là một dải lụa mềm có quán tính chứ không phải các ô vuông. Điều khiển bằng chuột, chơi được ngay mà không cần hướng dẫn.",
+      log:[
+        {t:"Prompt 1–5 · Vật lý lụa", d:"Chuỗi điểm cộng ràng buộc khoảng cách. Ra đúng ngay lần đầu, không sửa dòng nào."},
+        {t:"Prompt 6–20 · Cảm giác", d:"Mười bốn prompt chỉ để chỉnh damping và số đốt, đi tìm cảm giác “mượt mà không trơn”."},
+        {t:"Prompt 21–29 · Va chạm", d:"Rắn tự cắn đuôi khi quay gấp. Sửa bằng cách bỏ qua tám đốt đầu khi kiểm tra va chạm."}
+      ],
+      lesson:"Game hay hay dở nằm ở tham số chứ không ở thuật toán. Cứ hỏi lại đến khi thấy đã tay."
+    }
+  ];
+
+  var STATUS = { live:{c:"live", t:"Live"}, beta:{c:"beta", t:"Beta"}, lab:{c:"lab", t:"Thử nghiệm"} };
+  var TOOLS = ["Claude Opus","TypeScript","Vite","Tailwind","Svelte","Next.js","Three.js","Supabase","Postgres","Drizzle","Zod","Playwright","Canvas 2D","IndexedDB","Mapbox GL","Vercel"];
+
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  /* ---------- telemetry, computed from the data so it can't drift ---------- */
+  var totalPrompts = PROJECTS.reduce(function(a,p){ return a + p.prompts; }, 0);
+  var totalDays    = PROJECTS.reduce(function(a,p){ return a + p.days; }, 0);
+  var avgAi        = Math.round(PROJECTS.reduce(function(a,p){ return a + p.ai; }, 0) / PROJECTS.length);
+  var avgPrompts   = Math.round(totalPrompts / PROJECTS.length);
+
+  var tele = [
+    ["Dự án đã ship", String(PROJECTS.length).padStart(2,"0"), ""],
+    ["Tổng prompt", totalPrompts, ""],
+    ["Ngày từ ý tưởng → deploy", totalDays, "ngày"],
+    ["Code do AI viết", avgAi + "%", "trung bình"]
+  ];
+  el("telemetry").innerHTML = tele.map(function(t){
+    return '<div class="tele"><dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) +
+           (t[2] ? '<small>' + esc(t[2]) + '</small>' : '') + '</dd></div>';
+  }).join("");
+  el("loopAvg").textContent = avgPrompts;
+
+  /* ---------- toolkit rail (duplicated once for a seamless marquee) ---------- */
+  var railHtml = TOOLS.map(function(t){ return '<span>' + esc(t) + '</span>'; }).join("");
+  el("rail").innerHTML = railHtml + railHtml;
+
+  /* ---------- cards ---------- */
+  function cardHtml(p){
+    var s = STATUS[p.status];
+    return '<article class="card" tabindex="0" role="button" data-id="' + p.id + '" data-kind="' + esc(p.kind) + '" aria-label="Mở chi tiết dự án ' + esc(p.name) + '">' +
+      '<div class="card-top">' +
+        '<span class="pill ' + s.c + '">' + s.t + '</span>' +
+        '<span class="card-kind">' + esc(p.kind) + '</span>' +
+      '</div>' +
+      '<h3>' + esc(p.name) + '</h3>' +
+      '<p class="tag">' + esc(p.tag) + '</p>' +
+      '<div class="stack-row">' + p.stack.map(function(t){ return '<span class="tech">' + esc(t) + '</span>'; }).join("") + '</div>' +
+      '<div class="metrics">' +
+        '<span class="metric"><b>' + p.prompts + '</b> prompts</span>' +
+        '<span class="metric"><b>' + p.days + '</b> ngày</span>' +
+        '<span class="metric"><b>' + p.ai + '%</b> AI</span>' +
+      '</div>' +
+      '<p class="card-cta">Xem prompt gốc <span>→</span></p>' +
+    '</article>';
+  }
+
+  var grid = el("grid");
+  grid.innerHTML = PROJECTS.map(cardHtml).join("");
+
+  /* ---------- filters ---------- */
+  var kinds = ["Tất cả"].concat(PROJECTS.map(function(p){ return p.kind; }).filter(function(v,i,a){ return a.indexOf(v) === i; }));
+  el("filters").innerHTML = kinds.map(function(k,i){
+    return '<button class="chip" type="button" aria-pressed="' + (i===0) + '" data-kind="' + esc(k) + '">' + esc(k) + '</button>';
+  }).join("");
+
+  el("filters").addEventListener("click", function(e){
+    var b = e.target.closest(".chip");
+    if(!b) return;
+    var kind = b.dataset.kind;
+    Array.prototype.forEach.call(this.querySelectorAll(".chip"), function(c){
+      c.setAttribute("aria-pressed", String(c === b));
+    });
+    Array.prototype.forEach.call(grid.querySelectorAll(".card"), function(c){
+      c.hidden = !(kind === "Tất cả" || c.dataset.kind === kind);
+    });
+  });
+
+  /* ---------- pointer spotlight ---------- */
+  if (window.matchMedia && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    grid.addEventListener("pointermove", function(e){
+      var card = e.target.closest(".card");
+      if(!card) return;
+      var r = card.getBoundingClientRect();
+      card.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      card.style.setProperty("--my", (e.clientY - r.top) + "px");
+    });
+  }
+
+  /* ---------- detail dialog ---------- */
+  var dlg = el("sheet"), lastFocus = null;
+
+  function open(id){
+    var p = PROJECTS.filter(function(x){ return x.id === id; })[0];
+    if(!p) return;
+    lastFocus = document.activeElement;
+    el("sheetTitle").textContent = p.name;
+    el("sheetSub").textContent = p.tag;
+    el("sheetBody").innerHTML =
+      '<div class="blk"><span class="blk-label">Prompt gốc</span><div class="seed">' + esc(p.seed) + '</div></div>' +
+      '<div class="blk"><span class="blk-label">Nhật ký vòng lặp</span><div class="log">' +
+        p.log.map(function(l){ return '<div class="log-item"><h4>' + esc(l.t) + '</h4><p>' + esc(l.d) + '</p></div>'; }).join("") +
+      '</div></div>' +
+      '<div class="lesson"><b>Rút ra</b>' + esc(p.lesson) + '</div>' +
+      '<div class="blk"><span class="blk-label">Thông số</span><dl class="kv">' +
+        '<dt>Stack</dt><dd>' + esc(p.stack.join(" · ")) + '</dd>' +
+        '<dt>Model</dt><dd>' + esc(p.model) + '</dd>' +
+        '<dt>Prompt</dt><dd>' + p.prompts + '</dd>' +
+        '<dt>Ý tưởng → deploy</dt><dd>' + p.days + ' ngày</dd>' +
+        '<dt>Code do AI viết</dt><dd>' + p.ai + '%</dd>' +
+        '<dt>Demo</dt><dd>' + esc(p.demo) + ' <span style="color:var(--muted)">(mẫu)</span></dd>' +
+      '</dl></div>';
+    if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open","");
+    el("closeBtn").focus();
+  }
+
+  function close(){
+    if (typeof dlg.close === "function") dlg.close(); else dlg.removeAttribute("open");
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  grid.addEventListener("click", function(e){
+    var c = e.target.closest(".card");
+    if(c) open(c.dataset.id);
+  });
+  grid.addEventListener("keydown", function(e){
+    var c = e.target.closest(".card");
+    if(c && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); open(c.dataset.id); }
+  });
+  el("closeBtn").addEventListener("click", close);
+  dlg.addEventListener("click", function(e){ if(e.target === dlg) close(); });
+
+  /* ---------- hero prompt: full text at rest, then a slow rotation ---------- */
+  var featured = PROJECTS.slice(0, 4);
+  var out = el("promptText"), i = 0;
+
+  function paint(p){
+    out.textContent = p.seed;
+    el("termName").textContent = p.id;
+    el("termStat").textContent = p.prompts + " prompts";
+    el("termDays").textContent = p.days + " ngày";
+    el("termAi").textContent = p.ai + "% code do AI viết";
+  }
+  paint(featured[0]);
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduce) {
+    var typing = null;
+    function type(p){
+      clearInterval(typing);
+      el("termName").textContent = p.id;
+      el("termStat").textContent = p.prompts + " prompts";
+      el("termDays").textContent = p.days + " ngày";
+      el("termAi").textContent = p.ai + "% code do AI viết";
+      var n = 0;
+      out.textContent = "";
+      typing = setInterval(function(){
+        n += 2;
+        out.textContent = p.seed.slice(0, n);
+        if (n >= p.seed.length) clearInterval(typing);
+      }, 18);
+    }
+    setInterval(function(){
+      i = (i + 1) % featured.length;
+      type(featured[i]);
+    }, 8000);
+  }
+})();
+</script>
+
+</body>
+</html>
